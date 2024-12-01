@@ -42,6 +42,16 @@ where
     Ok(expr)
   }
 
+  fn parse_atom(&mut self) -> ParseResult<'src> {
+    match self.peek() {
+      Some(Token::Binding(_)) => Ok(Term::Variable(self.eat_binding()?)),
+      Some(Token::LParen) => self.parse_parenthesized(),
+      Some(Token::Lambda) => self.parse_abstraction(),
+      Some(tok) => Err(ParseError::UnexpectedToken(tok.clone())),
+      None => Err(ParseError::UnexpectedEof),
+    }
+  }
+
   fn parse_abstraction(&mut self) -> ParseResult<'src> {
     let () = self.eat(Token::Lambda)?;
     let param = self.eat_binding()?;
@@ -51,23 +61,6 @@ where
       param,
       body: Box::new(body),
     })
-  }
-
-  fn parse_parenthesized(&mut self) -> ParseResult<'src> {
-    let () = self.eat(Token::LParen)?;
-    let term = self.parse_application()?;
-    let () = self.eat(Token::RParen)?;
-    Ok(term)
-  }
-
-  fn parse_atom(&mut self) -> ParseResult<'src> {
-    match self.peek() {
-      Some(Token::Binding(_)) => Ok(Term::Variable(self.eat_binding()?)),
-      Some(Token::LParen) => self.parse_parenthesized(),
-      Some(Token::Lambda) => self.parse_abstraction(),
-      Some(tok) => Err(ParseError::UnexpectedToken(tok.clone())),
-      None => Err(ParseError::UnexpectedEof),
-    }
   }
 
   fn parse_application(&mut self) -> ParseResult<'src> {
@@ -80,6 +73,13 @@ where
         rhs: Box::new(rhs),
       };
     }
+    Ok(term)
+  }
+
+  fn parse_parenthesized(&mut self) -> ParseResult<'src> {
+    let () = self.eat(Token::LParen)?;
+    let term = self.parse_application()?;
+    let () = self.eat(Token::RParen)?;
     Ok(term)
   }
 
