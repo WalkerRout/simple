@@ -3,7 +3,7 @@ use simple::lexer::Lexer;
 use simple::parser::Parser;
 
 fn main() {
-  let input = "(λx. λy. x) (λy. y) (λx. x)";
+  let input = r"(λx. (λy. (λz. x))) a b c";
   let lexer = Lexer::new(input);
   let mut parser = Parser::new(lexer);
   match parser.parse() {

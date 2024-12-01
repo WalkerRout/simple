@@ -114,6 +114,156 @@ mod tests {
     }
 
     #[test]
+    fn evaluate_and() {
+      // λp. λq. p q p
+      let and_term = Term::Abstraction {
+        param: "p",
+        body: Box::new(Term::Abstraction {
+          param: "q",
+          body: Box::new(Term::Application {
+            lhs: Box::new(Term::Application {
+              lhs: Box::new(Term::Variable("p")),
+              rhs: Box::new(Term::Variable("q")),
+            }),
+            rhs: Box::new(Term::Variable("p")),
+          }),
+        }),
+      };
+      // λx. λy. x
+      let true_term = Term::Abstraction {
+        param: "x",
+        body: Box::new(Term::Abstraction {
+          param: "y",
+          body: Box::new(Term::Variable("x")),
+        }),
+      };
+      // λx. λy. y
+      let false_term = Term::Abstraction {
+        param: "x",
+        body: Box::new(Term::Abstraction {
+          param: "y",
+          body: Box::new(Term::Variable("y")),
+        }),
+      };
+
+      // (λp. λq. p q p) (λx. λy. x) (λx. λy. y)
+      let term = Term::Application {
+        lhs: Box::new(Term::Application {
+          lhs: Box::new(and_term),
+          rhs: Box::new(true_term.clone()),
+        }),
+        rhs: Box::new(false_term.clone()),
+      };
+
+      let mut interpreter = Interpreter;
+      let result = interpreter.evaluate(&term);
+      // true AND false produces false
+      assert_eq!(result, false_term);
+    }
+
+    #[test]
+    fn evaluate_or() {
+      // λp. λq. p p q
+      let or_term = Term::Abstraction {
+        param: "p",
+        body: Box::new(Term::Abstraction {
+          param: "q",
+          body: Box::new(Term::Application {
+            lhs: Box::new(Term::Application {
+              lhs: Box::new(Term::Variable("p")),
+              rhs: Box::new(Term::Variable("p")),
+            }),
+            rhs: Box::new(Term::Variable("q")),
+          }),
+        }),
+      };
+      // λx. λy. x
+      let true_term = Term::Abstraction {
+        param: "x",
+        body: Box::new(Term::Abstraction {
+          param: "y",
+          body: Box::new(Term::Variable("x")),
+        }),
+      };
+      // λx. λy. y
+      let false_term = Term::Abstraction {
+        param: "x",
+        body: Box::new(Term::Abstraction {
+          param: "y",
+          body: Box::new(Term::Variable("y")),
+        }),
+      };
+
+      // (λp. λq. p p q) (λx. λy. y) (λx. λy. x)
+      let term = Term::Application {
+        lhs: Box::new(Term::Application {
+          lhs: Box::new(or_term),
+          rhs: Box::new(false_term.clone()),
+        }),
+        rhs: Box::new(true_term.clone()),
+      };
+
+      let mut interpreter = Interpreter;
+      let result = interpreter.evaluate(&term);
+      // false or true produces true
+      assert_eq!(result, true_term);
+    }
+
+    #[test]
+    fn evaluate_not() {
+      // λp. p (λx. λy. y) (λx. λy. x)
+      let not_term = Term::Abstraction {
+        param: "p",
+        body: Box::new(Term::Application {
+          lhs: Box::new(Term::Application {
+            lhs: Box::new(Term::Variable("p")),
+            rhs: Box::new(Term::Abstraction {
+              param: "x",
+              body: Box::new(Term::Abstraction {
+                param: "y",
+                body: Box::new(Term::Variable("y")),
+              }),
+            }),
+          }),
+          rhs: Box::new(Term::Abstraction {
+            param: "x",
+            body: Box::new(Term::Abstraction {
+              param: "y",
+              body: Box::new(Term::Variable("x")),
+            }),
+          }),
+        }),
+      };
+      // λx. λy. x
+      let true_term = Term::Abstraction {
+        param: "x",
+        body: Box::new(Term::Abstraction {
+          param: "y",
+          body: Box::new(Term::Variable("x")),
+        }),
+      };
+      // λx. λy. y
+      let false_term = Term::Abstraction {
+        param: "x",
+        body: Box::new(Term::Abstraction {
+          param: "y",
+          body: Box::new(Term::Variable("y")),
+        }),
+      };
+
+      // (λp. p (λx. λy. y) (λx. λy. x)) (λx. λy. x)
+      let term = Term::Application {
+        lhs: Box::new(not_term),
+        rhs: Box::new(true_term.clone()),
+      };
+
+      let mut interpreter = Interpreter;
+      let result = interpreter.evaluate(&term);
+      // NOT true produces false
+      assert_eq!(result, false_term);
+    }
+
+    #[test]
     fn substitute_variable() {
       let term = Term::Variable("x");
       let mut interpreter = Interpreter;
